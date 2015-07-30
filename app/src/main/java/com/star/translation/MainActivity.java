@@ -162,14 +162,21 @@ public class MainActivity extends AppCompatActivity {
         mReadButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                mTextToSpeech.setLanguage(mCurrentSpokenLang);
+                int result = mTextToSpeech.setLanguage(mCurrentSpokenLang);
 
-                if (mArrayOfTranslation.length >= 9) {
-                    mTextToSpeech.speak(mArrayOfTranslation[mSpinnerIndex + 4],
-                            TextToSpeech.QUEUE_FLUSH, null);
-                } else {
-                    Toast.makeText(MainActivity.this, "Translate Text First",
+                if ((result == TextToSpeech.LANG_MISSING_DATA) ||
+                        (result == TextToSpeech.LANG_NOT_SUPPORTED)) {
+                    Toast.makeText(MainActivity.this, "Language Not Supported",
                             Toast.LENGTH_SHORT).show();
+                } else {
+
+                    if (mArrayOfTranslation != null && mArrayOfTranslation.length >= 9) {
+                        mTextToSpeech.speak(mArrayOfTranslation[mSpinnerIndex + 4],
+                                TextToSpeech.QUEUE_FLUSH, null);
+                    } else {
+                        Toast.makeText(MainActivity.this, "Translate Text First",
+                                Toast.LENGTH_SHORT).show();
+                    }
                 }
             }
         });
