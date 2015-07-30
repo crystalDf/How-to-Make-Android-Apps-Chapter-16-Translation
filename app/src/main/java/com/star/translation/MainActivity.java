@@ -151,7 +151,7 @@ public class MainActivity extends AppCompatActivity {
                                 Toast.LENGTH_SHORT).show();
                     }
                 } else {
-                    Toast.makeText(MainActivity.this, "Text TO Speech Failed",
+                    Toast.makeText(MainActivity.this, "Text To Speech Failed",
                             Toast.LENGTH_SHORT).show();
                 }
             }
