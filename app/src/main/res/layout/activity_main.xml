@@ -16,10 +16,28 @@
         android:hint="@string/hint"/>
 
     <Button
-        android:id="@+id/translate"
+        android:id="@+id/speak_button"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/speak"/>
+    
+    <Button
+        android:id="@+id/translate_button"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="@string/translate"/>
+
+    <Spinner
+        android:id="@+id/lang_spinner"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:entries="@array/languages_array"/>
+
+    <Button
+        android:id="@+id/read_button"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/read"/>
 
     <TextView
         android:id="@+id/translation_text_view"

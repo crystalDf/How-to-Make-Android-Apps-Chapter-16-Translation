@@ -1,12 +1,19 @@
 package com.star.translation;
 
+import android.content.ActivityNotFoundException;
+import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.speech.RecognizerIntent;
+import android.speech.tts.TextToSpeech;
 import android.support.v7.app.AppCompatActivity;
 import android.text.TextUtils;
+import android.text.method.ScrollingMovementMethod;
 import android.view.View;
+import android.widget.AdapterView;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -23,6 +30,8 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.List;
+import java.util.Locale;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -32,8 +41,30 @@ import javax.xml.parsers.ParserConfigurationException;
 public class MainActivity extends AppCompatActivity {
 
     private EditText mEditText;
+    private Button mSpeakButton;
     private Button mTranslateButton;
+    private Button mReadButton;
     private TextView mTranslationTextView;
+
+    private Locale mCurrentSpokenLang = Locale.US;
+
+    private Locale mLocaleSpanish = new Locale("es", "MX");
+    private Locale mLocaleRussian = new Locale("ru", "RU");
+    private Locale mLocalePortuguese = new Locale("pt", "BR");
+    private Locale mLocaleDutch = new Locale("nl", "NL");
+
+    private Locale[] mLanguages = {mLocaleDutch, Locale.FRENCH, Locale.GERMAN, Locale.ITALIAN,
+            mLocalePortuguese, mLocaleRussian, mLocaleSpanish};
+
+    private TextToSpeech mTextToSpeech;
+
+    private Spinner mLanguageSpinner;
+
+    private int mSpinnerIndex = 0;
+
+    private String[] mArrayOfTranslation;
+
+    public static final int REQUEST_CODE = 0;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -41,8 +72,33 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
         mEditText = (EditText) findViewById(R.id.edit_text);
-        mTranslateButton = (Button) findViewById(R.id.translate);
+
+        mSpeakButton = (Button) findViewById(R.id.speak_button);
+        mTranslateButton = (Button) findViewById(R.id.translate_button);
         mTranslationTextView = (TextView) findViewById(R.id.translation_text_view);
+
+        mSpeakButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
+
+                intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL,
+                        RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
+
+                intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE,
+                        Locale.getDefault());
+
+                intent.putExtra(RecognizerIntent.EXTRA_PROMPT,
+                        getString(R.string.speech_input_phrase));
+
+                try {
+                    startActivityForResult(intent, REQUEST_CODE);
+                } catch (ActivityNotFoundException e) {
+                    Toast.makeText(MainActivity.this, R.string.stt_not_supported_message,
+                            Toast.LENGTH_LONG).show();
+                }
+            }
+        });
 
         mTranslateButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -66,6 +122,68 @@ public class MainActivity extends AppCompatActivity {
 
             }
         });
+
+        mLanguageSpinner = (Spinner) findViewById(R.id.lang_spinner);
+
+        mLanguageSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                mCurrentSpokenLang = mLanguages[position];
+
+                mSpinnerIndex = position;
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {
+
+            }
+        });
+
+        mTextToSpeech = new TextToSpeech(this, new TextToSpeech.OnInitListener() {
+            @Override
+            public void onInit(int status) {
+                if (status == TextToSpeech.SUCCESS) {
+                    int result = mTextToSpeech.setLanguage(mCurrentSpokenLang);
+
+                    if ((result == TextToSpeech.LANG_MISSING_DATA) ||
+                            (result == TextToSpeech.LANG_NOT_SUPPORTED)) {
+                        Toast.makeText(MainActivity.this, "Language Not Supported",
+                                Toast.LENGTH_SHORT).show();
+                    }
+                } else {
+                    Toast.makeText(MainActivity.this, "Text TO Speech Failed",
+                            Toast.LENGTH_SHORT).show();
+                }
+            }
+        });
+
+        mReadButton = (Button) findViewById(R.id.read_button);
+
+        mReadButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                mTextToSpeech.setLanguage(mCurrentSpokenLang);
+
+                if (mArrayOfTranslation.length >= 9) {
+                    mTextToSpeech.speak(mArrayOfTranslation[mSpinnerIndex + 4],
+                            TextToSpeech.QUEUE_FLUSH, null);
+                } else {
+                    Toast.makeText(MainActivity.this, "Translate Text First",
+                            Toast.LENGTH_SHORT).show();
+                }
+            }
+        });
+    }
+
+    @Override
+    protected void onDestroy() {
+
+        if (mTextToSpeech != null) {
+            mTextToSpeech.stop();
+            mTextToSpeech.shutdown();
+        }
+
+        super.onDestroy();
     }
 
     private class GetJsonData extends AsyncTask<Void, Void, Void> {
@@ -202,6 +320,13 @@ public class MainActivity extends AppCompatActivity {
 
         @Override
         protected void onPostExecute(Void aVoid) {
+
+            mTranslationTextView.setMovementMethod(new ScrollingMovementMethod());
+
+            String stringOfTranslations = result.replaceAll("\\w+\\s:", "#");
+
+            mArrayOfTranslation = stringOfTranslations.split("#");
+
             mTranslationTextView.setText(result);
         }
 
@@ -218,4 +343,19 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+
+        if ((requestCode == REQUEST_CODE) && (data != null) && (resultCode == RESULT_OK)) {
+            List<String> spokenText = data.getStringArrayListExtra(
+                    RecognizerIntent.EXTRA_RESULTS
+            );
+
+            EditText wordsEntered = (EditText) findViewById(R.id.edit_text);
+
+            wordsEntered.setText(spokenText.get(0));
+        }
+
+        super.onActivityResult(requestCode, resultCode, data);
+    }
 }

@@ -8,6 +8,7 @@
     <string name="server_json_url"><![CDATA[http://www.newjustin.com/translateit.php?action=translations&english_words=]]></string>
     <string name="server_xml_url"><![CDATA[http://www.newjustin.com/translateit.php?action=xmltranslations&english_words=]]></string>
     <string name="json_array_name">translations</string>
+    <string name="speak">Speak</string>
 
     <string-array name="languages">
         <item>arabic</item>
@@ -21,4 +22,18 @@
         <item>russian</item>
         <item>spanish</item>
     </string-array>
+
+    <string-array name="languages_array">
+        <item>Dutch</item>
+        <item>French</item>
+        <item>German</item>
+        <item>Italian</item>
+        <item>Portuguese</item>
+        <item>Russian</item>
+        <item>Spanish</item>
+    </string-array>
+    
+    <string name="speech_input_phrase">Say the Phrase</string>
+    <string name="stt_not_supported_message">"Your Device Doesn't Support Speech to Text"</string>
+    <string name="read">Read</string>
 </resources>
