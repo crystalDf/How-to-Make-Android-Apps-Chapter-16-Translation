@@ -111,8 +111,8 @@ public class MainActivity extends AppCompatActivity {
                     Toast.makeText(MainActivity.this, "Getting Translations",
                             Toast.LENGTH_LONG).show();
 
-//                    new GetJsonData().execute();
-                    new GetXmlData().execute();
+//                    new GetJsonData().execute(wordsToTranslate);
+                    new GetXmlData().execute(wordsToTranslate);
 
                 } else {
 
@@ -193,16 +193,16 @@ public class MainActivity extends AppCompatActivity {
         super.onDestroy();
     }
 
-    private class GetJsonData extends AsyncTask<Void, Void, Void> {
+    private class GetJsonData extends AsyncTask<String, Void, Void> {
 
         String jsonString = "";
 
         String result = "";
 
         @Override
-        protected Void doInBackground(Void... params) {
+        protected Void doInBackground(String... params) {
 
-            String wordsToTranslate = mEditText.getText().toString();
+            String wordsToTranslate = params[0];
 
             wordsToTranslate = wordsToTranslate.replace(" ", "+");
 
@@ -275,14 +275,14 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    private class GetXmlData extends AsyncTask<Void, Void, Void> {
+    private class GetXmlData extends AsyncTask<String, Void, Void> {
 
         String result = "";
 
         @Override
-        protected Void doInBackground(Void... params) {
+        protected Void doInBackground(String... params) {
 
-            String wordsToTranslate = mEditText.getText().toString();
+            String wordsToTranslate = params[0];
 
             wordsToTranslate = wordsToTranslate.replace(" ", "+");
 
@@ -345,7 +345,10 @@ public class MainActivity extends AppCompatActivity {
             for (int i = 0; i < languages.length; i++) {
                 elements[i] = (Element) element.getElementsByTagName(languages[i]).item(0);
 
-                result += (languages[i] + " : " + elements[i].getFirstChild().getNodeValue() + "\n");
+                if (elements[i].getFirstChild() != null) {
+                    result += (languages[i] + " : " +
+                            elements[i].getFirstChild().getNodeValue() + "\n");
+                }
             }
         }
     }
