@@ -48,12 +48,15 @@ public class MainActivity extends AppCompatActivity {
 
     private Locale mCurrentSpokenLang = Locale.US;
 
+    private Locale mLocaleArabic = new Locale("ar", "AE");
+    private Locale mLocaleDanish = new Locale("da", "DK");
     private Locale mLocaleSpanish = new Locale("es", "MX");
     private Locale mLocaleRussian = new Locale("ru", "RU");
     private Locale mLocalePortuguese = new Locale("pt", "BR");
     private Locale mLocaleDutch = new Locale("nl", "NL");
 
-    private Locale[] mLanguages = {mLocaleDutch, Locale.FRENCH, Locale.GERMAN, Locale.ITALIAN,
+    private Locale[] mLanguages = {mLocaleArabic, Locale.CHINA, mLocaleDanish,
+            mLocaleDutch, Locale.FRENCH, Locale.GERMAN, Locale.ITALIAN,
             mLocalePortuguese, mLocaleRussian, mLocaleSpanish};
 
     private TextToSpeech mTextToSpeech;
@@ -64,7 +67,10 @@ public class MainActivity extends AppCompatActivity {
 
     private String[] mArrayOfTranslation;
 
-    public static final int REQUEST_CODE = 0;
+    private boolean mTtsIsInited = false;
+
+    public static final int TTS_DATA_CHECK = 0;
+    public static final int STT_DATA_CHECK = 1;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -92,7 +98,7 @@ public class MainActivity extends AppCompatActivity {
                         getString(R.string.speech_input_phrase));
 
                 try {
-                    startActivityForResult(intent, REQUEST_CODE);
+                    startActivityForResult(intent, STT_DATA_CHECK);
                 } catch (ActivityNotFoundException e) {
                     Toast.makeText(MainActivity.this, R.string.stt_not_supported_message,
                             Toast.LENGTH_LONG).show();
@@ -143,13 +149,7 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onInit(int status) {
                 if (status == TextToSpeech.SUCCESS) {
-                    int result = mTextToSpeech.setLanguage(mCurrentSpokenLang);
-
-                    if ((result == TextToSpeech.LANG_MISSING_DATA) ||
-                            (result == TextToSpeech.LANG_NOT_SUPPORTED)) {
-                        Toast.makeText(MainActivity.this, "Language Not Supported",
-                                Toast.LENGTH_SHORT).show();
-                    }
+                    mTtsIsInited = true;
                 } else {
                     Toast.makeText(MainActivity.this, "Text To Speech Failed",
                             Toast.LENGTH_SHORT).show();
@@ -162,22 +162,9 @@ public class MainActivity extends AppCompatActivity {
         mReadButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                int result = mTextToSpeech.setLanguage(mCurrentSpokenLang);
 
-                if ((result == TextToSpeech.LANG_MISSING_DATA) ||
-                        (result == TextToSpeech.LANG_NOT_SUPPORTED)) {
-                    Toast.makeText(MainActivity.this, "Language Not Supported",
-                            Toast.LENGTH_SHORT).show();
-                } else {
-
-                    if (mArrayOfTranslation != null && mArrayOfTranslation.length >= 9) {
-                        mTextToSpeech.speak(mArrayOfTranslation[mSpinnerIndex + 4],
-                                TextToSpeech.QUEUE_FLUSH, null);
-                    } else {
-                        Toast.makeText(MainActivity.this, "Translate Text First",
-                                Toast.LENGTH_SHORT).show();
-                    }
-                }
+                Intent intent = new Intent(TextToSpeech.Engine.ACTION_CHECK_TTS_DATA);
+                startActivityForResult(intent, TTS_DATA_CHECK);
             }
         });
     }
@@ -356,7 +343,32 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
 
-        if ((requestCode == REQUEST_CODE) && (data != null) && (resultCode == RESULT_OK)) {
+        if (requestCode == TTS_DATA_CHECK) {
+            if (resultCode == TextToSpeech.Engine.CHECK_VOICE_DATA_PASS) {
+                int result = mTextToSpeech.setLanguage(mCurrentSpokenLang);
+
+                if ((result == TextToSpeech.LANG_MISSING_DATA) ||
+                        (result == TextToSpeech.LANG_NOT_SUPPORTED)) {
+                    Toast.makeText(MainActivity.this, "Language Not Supported",
+                            Toast.LENGTH_SHORT).show();
+                } else {
+
+                    if (mTextToSpeech != null && mTtsIsInited &&
+                            mArrayOfTranslation != null && mArrayOfTranslation.length >= 9) {
+                        mTextToSpeech.speak(mArrayOfTranslation[mSpinnerIndex + 1],
+                                TextToSpeech.QUEUE_FLUSH, null);
+                    } else {
+                        Toast.makeText(MainActivity.this, "Translate Text First",
+                                Toast.LENGTH_SHORT).show();
+                    }
+                }
+            } else {
+                Intent installVoice = new Intent(TextToSpeech.Engine.ACTION_INSTALL_TTS_DATA);
+                startActivity(installVoice);
+            }
+        }
+
+        if ((requestCode == STT_DATA_CHECK) && (data != null) && (resultCode == RESULT_OK)) {
             List<String> spokenText = data.getStringArrayListExtra(
                     RecognizerIntent.EXTRA_RESULTS
             );

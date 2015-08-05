@@ -24,6 +24,9 @@
     </string-array>
 
     <string-array name="languages_array">
+        <item>Arabic</item>
+        <item>Chinese</item>
+        <item>Danish</item>
         <item>Dutch</item>
         <item>French</item>
         <item>German</item>
